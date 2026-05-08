@@ -105,7 +105,13 @@ function HomeContent() {
   );
 
   useEffect(() => {
-    locateUser(true);
+    const timer = window.setTimeout(() => {
+      locateUser(true);
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, [locateUser]);
 
   const filteredRoutes = useMemo(() => {
