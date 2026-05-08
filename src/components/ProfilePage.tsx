@@ -1,12 +1,14 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Settings, Bell, Shield, FileText, HelpCircle, ChevronRight, MapPin, Heart, Compass, Award, Star, TrendingUp,
-  Zap, History, Trash2, Clock3
+  Zap, History, Trash2, Clock3, Edit3, Save
 } from 'lucide-react';
 import { ROUTES } from '@/data/routes';
 import type { Route } from '@/data/routes';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useRouteHistory } from '@/hooks/useRouteHistory';
+import { useUserProfile } from '@/hooks/useUserProfile';
+import { isSupabaseConfigured } from '@/lib/supabase';
 import RouteDetail from './RouteDetail';
 
 const MENU_ITEMS = [
@@ -24,7 +26,14 @@ interface ProfilePageProps {
 export default function ProfilePage({ onOpenRoute }: ProfilePageProps) {
   const { favorites, toggle } = useFavorites();
   const { history, loaded, clearHistory } = useRouteHistory();
+  const { profile, saving, updateProfile } = useUserProfile();
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [draftProfile, setDraftProfile] = useState(profile);
+
+  useEffect(() => {
+    setDraftProfile(profile);
+  }, [profile]);
 
   const historyRoutes = useMemo(
     () =>
@@ -88,14 +97,87 @@ export default function ProfilePage({ onOpenRoute }: ProfilePageProps) {
             </div>
           </div>
           <div className="flex-1">
-            <h1 className="font-display text-xl font-bold text-gray-900">周末旅行者</h1>
-            <p className="text-sm text-gray-500 mt-0.5">探索周边，发现精彩</p>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h1 className="font-display text-xl font-bold text-gray-900">{profile.nickname}</h1>
+                <p className="mt-0.5 text-[11px] text-gray-400">
+                  {isSupabaseConfigured ? '云端同步已开启' : '本地模式（未配置 Supabase）'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditingProfile((prev) => !prev)}
+                className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-3 py-1 text-[11px] text-gray-600 transition-colors hover:bg-gray-200"
+              >
+                <Edit3 className="w-3 h-3" />
+                {isEditingProfile ? '收起' : '编辑资料'}
+              </button>
+            </div>
+            <p className="text-sm text-gray-500 mt-0.5">{profile.bio}</p>
             <div className="flex items-center gap-1 mt-2">
               <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
               <span className="text-xs text-gray-500">LV.{Math.min(1 + Math.floor(favorites.length / 2), 10)} 旅行达人</span>
             </div>
           </div>
         </div>
+
+        {isEditingProfile && (
+          <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-3">
+            <label className="mb-2 block text-xs font-medium text-gray-500">昵称</label>
+            <input
+              value={draftProfile.nickname}
+              onChange={(e) =>
+                setDraftProfile((prev) => ({
+                  ...prev,
+                  nickname: e.target.value,
+                }))
+              }
+              placeholder="请输入昵称"
+              className="mb-3 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-[#FF4D00] focus:outline-none"
+            />
+            <label className="mb-2 block text-xs font-medium text-gray-500">个人简介</label>
+            <textarea
+              value={draftProfile.bio}
+              onChange={(e) =>
+                setDraftProfile((prev) => ({
+                  ...prev,
+                  bio: e.target.value,
+                }))
+              }
+              placeholder="说一句你的旅行宣言"
+              rows={2}
+              className="w-full resize-none rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-[#FF4D00] focus:outline-none"
+            />
+            <div className="mt-3 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDraftProfile(profile);
+                  setIsEditingProfile(false);
+                }}
+                className="rounded-full bg-white px-3 py-1.5 text-xs text-gray-500 border border-gray-200 hover:bg-gray-100 transition-colors"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const safeProfile = {
+                    nickname: draftProfile.nickname.trim() || '周末旅行者',
+                    bio: draftProfile.bio.trim() || '探索周边，发现精彩',
+                  };
+                  await updateProfile(safeProfile);
+                  setIsEditingProfile(false);
+                }}
+                disabled={saving}
+                className="inline-flex items-center gap-1 rounded-full bg-[#FF4D00] px-3 py-1.5 text-xs text-white transition-colors hover:bg-[#E04400] disabled:opacity-60"
+              >
+                <Save className="w-3 h-3" />
+                {saving ? '保存中...' : '保存资料'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Stats Row */}

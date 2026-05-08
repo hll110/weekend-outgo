@@ -294,6 +294,28 @@
 
 .leaflet-container {
   font-family: var(--font-ui);
+  z-index: 1;
+}
+
+.leaflet-tile-pane {
+  z-index: 100 !important;
+}
+
+.leaflet-overlay-pane {
+  z-index: 200 !important;
+}
+
+.leaflet-marker-pane {
+  z-index: 300 !important;
+}
+
+.leaflet-tooltip-pane,
+.leaflet-popup-pane {
+  z-index: 350 !important;
+}
+
+.leaflet-control {
+  z-index: 400 !important;
 }
 
 .leaflet-tooltip {
