@@ -33,12 +33,12 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
-    --color-brand: #FF4D00;
-    --color-brand-dark: #E04400;
-    --color-text: #1A1A1A;
-    --color-text-secondary: #4A5568;
-    --color-bg: #FFFFFF;
-    --color-bg-warm: #F3F4F6;
+    --color-brand: #f54e00;
+    --color-brand-dark: #cf2d56;
+    --color-text: #26251e;
+    --color-text-secondary: rgba(38, 37, 30, 0.62);
+    --color-bg: #f2f1ed;
+    --color-bg-warm: #ebeae5;
     --font-display: 'Noto Serif SC', serif;
     --font-ui: 'Inter', sans-serif;
   }
@@ -51,6 +51,8 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-ui);
+    background: var(--color-bg);
+    color: var(--color-text);
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -139,16 +141,17 @@
   }
 
   .route-card {
-    background: white;
+    background: #f7f7f4;
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(38, 37, 30, 0.12);
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.08);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .route-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.12);
   }
 
   .hero-aurora-bg {
@@ -287,4 +290,16 @@
 }
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+.leaflet-container {
+  font-family: var(--font-ui);
+}
+
+.leaflet-tooltip {
+  border: 1px solid rgba(38, 37, 30, 0.12);
+  background: #f7f7f4;
+  color: #26251e;
+  border-radius: 10px;
+  padding: 4px 8px;
 }
