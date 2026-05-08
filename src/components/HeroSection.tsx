@@ -35,7 +35,7 @@ function CityDropdown({ selectedCity, cities, onSelectCity, isOpen, onClose, anc
   return (
     <div
       ref={dropdownRef}
-      className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-scale-in"
+      className="absolute left-0 right-0 top-[calc(100%+8px)] z-[3200] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-scale-in"
     >
       <div className="p-2 max-h-64 overflow-y-auto">
         <div className="text-xs text-gray-400 px-3 py-2 font-medium">搜索匹配城市</div>
@@ -131,7 +131,7 @@ export default function HeroSection({ selectedCity, onCityChange, isLocating, on
       <div className="hero-aurora-bg" style={{ opacity: 0.5 }} />
 
       {/* Content */}
-      <div className="relative z-10 px-5 pb-8 pt-20">
+      <div className="relative z-[3000] px-5 pb-8 pt-20">
         <div className="max-w-xl mx-auto">
           {/* Title */}
           <div className="mb-6">

@@ -1,5 +1,7 @@
-/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable react-refresh/only-export-components, react-hooks/set-state-in-effect */
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { getOrCreateDeviceId } from '@/lib/deviceId';
+import { addRouteHistory, clearRouteHistory as clearRemoteRouteHistory, fetchRouteHistory } from '@/services/userDataService';
 import type { Coordinates } from '@/utils/geo';
 
 const STORAGE_KEY = 'tripweave-route-history';
@@ -26,25 +28,61 @@ const RouteHistoryContext = createContext<RouteHistoryContextValue>({
   clearHistory: () => {},
 });
 
+function readHistoryFromLocalStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw) as unknown;
+    if (Array.isArray(parsed)) {
+      return parsed.filter(
+        (item): item is RouteHistoryEntry =>
+          typeof item === 'object' &&
+          item !== null &&
+          'routeId' in item &&
+          'city' in item &&
+          'viewedAt' in item
+      );
+    }
+  } catch {
+    // ignore malformed history
+  }
+  return [];
+}
+
 export function RouteHistoryProvider({ children }: { children: ReactNode }) {
-  const [history, setHistory] = useState<RouteHistoryEntry[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const [history, setHistory] = useState<RouteHistoryEntry[]>(() => readHistoryFromLocalStorage());
+  const loaded = true;
+  const deviceId = useMemo(() => getOrCreateDeviceId(), []);
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw) as RouteHistoryEntry[];
-        if (Array.isArray(parsed)) {
-          setHistory(parsed);
-        }
+    let cancelled = false;
+
+    const syncRemoteHistory = async () => {
+      const remoteHistory = await fetchRouteHistory(deviceId);
+      if (cancelled || !remoteHistory) {
+        return;
       }
-    } catch {
-      // ignore malformed history
-    } finally {
-      setLoaded(true);
-    }
-  }, []);
+
+      setHistory(() => {
+        const next = remoteHistory.slice(0, MAX_HISTORY_SIZE);
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        } catch {
+          // ignore local persistence error
+        }
+        return next;
+      });
+    };
+
+    void syncRemoteHistory();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [deviceId]);
 
   const persist = useCallback((next: RouteHistoryEntry[]) => {
     try {
@@ -61,10 +99,11 @@ export function RouteHistoryProvider({ children }: { children: ReactNode }) {
         const deduped = prev.filter((item) => item.routeId !== entry.routeId);
         const next = [nextItem, ...deduped].slice(0, MAX_HISTORY_SIZE);
         persist(next);
+        void addRouteHistory(deviceId, nextItem);
         return next;
       });
     },
-    [persist]
+    [deviceId, persist]
   );
 
   const clearHistory = useCallback(() => {
@@ -74,7 +113,8 @@ export function RouteHistoryProvider({ children }: { children: ReactNode }) {
     } catch {
       // ignore persistence error
     }
-  }, []);
+    void clearRemoteRouteHistory(deviceId);
+  }, [deviceId]);
 
   const value = useMemo(
     () => ({
