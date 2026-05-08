@@ -1,9 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { MapPin, Mountain, UtensilsCrossed, Tent, Camera, Building2, TreePine, Waves, ChevronRight, Search, X, Loader2 } from 'lucide-react';
 import { CITIES, ROUTES } from '@/data/routes';
-import type { Route } from '@/data/routes';
 import { useFavorites } from '@/hooks/useFavorites';
-import RouteDetail from './RouteDetail';
 import RouteCard from './RouteCard';
 
 const THEMES = [
@@ -19,11 +17,11 @@ const THEMES = [
 interface ExplorePageProps {
   selectedCity: string;
   onCityChange: (city: string) => void;
+  onOpenRoute: (routeId: string) => void;
 }
 
-export default function ExplorePage({ selectedCity, onCityChange }: ExplorePageProps) {
+export default function ExplorePage({ selectedCity, onCityChange, onOpenRoute }: ExplorePageProps) {
   const [activeTheme, setActiveTheme] = useState<string | null>(null);
-  const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
   const [showCityPicker, setShowCityPicker] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -254,6 +252,7 @@ export default function ExplorePage({ selectedCity, onCityChange }: ExplorePageP
                 index={index}
                 isFavorited={isFavorited(route.id)}
                 onToggleFavorite={toggle}
+                onOpenDetail={() => onOpenRoute(route.id)}
               />
             ))}
           </div>
@@ -277,14 +276,6 @@ export default function ExplorePage({ selectedCity, onCityChange }: ExplorePageP
         )}
       </div>
 
-      {selectedRoute && (
-        <RouteDetail
-          route={selectedRoute}
-          onClose={() => setSelectedRoute(null)}
-          isFavorited={isFavorited(selectedRoute.id)}
-          onToggleFavorite={toggle}
-        />
-      )}
     </div>
   );
 }

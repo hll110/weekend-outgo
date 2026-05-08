@@ -5,7 +5,11 @@ import type { Route } from '@/data/routes';
 import { useFavorites } from '@/hooks/useFavorites';
 import RouteDetail from './RouteDetail';
 
-export default function FavoritesPage() {
+interface FavoritesPageProps {
+  onOpenRoute: (routeId: string) => void;
+}
+
+export default function FavoritesPage({ onOpenRoute }: FavoritesPageProps) {
   const { favorites, toggle, isFavorited, loaded } = useFavorites();
   const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
 
@@ -34,7 +38,10 @@ export default function FavoritesPage() {
               className="relative bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
             >
               <button
-                onClick={() => setSelectedRoute(route)}
+                onClick={() => {
+                  onOpenRoute(route.id);
+                  setSelectedRoute(route);
+                }}
                 className="w-full flex items-start gap-3 p-3 text-left hover:bg-gray-50 transition-all"
               >
                 <img

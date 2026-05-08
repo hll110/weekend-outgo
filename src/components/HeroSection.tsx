@@ -93,38 +93,12 @@ function CityDropdown({ selectedCity, onCityChange, isOpen, onClose, anchorRef }
 interface HeroSectionProps {
   selectedCity: string;
   onCityChange: (city: string) => void;
+  isLocating: boolean;
+  onLocate: () => void;
 }
 
-function getDistance(lat1: number, lng1: number, lat2: number, lng2: number) {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-function findNearestCity(lat: number, lng: number) {
-  let nearest = CITIES[0];
-  let minDist = Infinity;
-  for (const city of CITIES) {
-    const dist = getDistance(lat, lng, city.lat, city.lng);
-    if (dist < minDist) {
-      minDist = dist;
-      nearest = city;
-    }
-  }
-  return nearest.name;
-}
-
-export default function HeroSection({ selectedCity, onCityChange }: HeroSectionProps) {
+export default function HeroSection({ selectedCity, onCityChange, isLocating, onLocate }: HeroSectionProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLocating, setIsLocating] = useState(false);
   const [showText, setShowText] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -134,31 +108,8 @@ export default function HeroSection({ selectedCity, onCityChange }: HeroSectionP
   }, []);
 
   const handleLocate = useCallback(() => {
-    setIsLocating(true);
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          const nearestCity = findNearestCity(latitude, longitude);
-          setTimeout(() => {
-            onCityChange(nearestCity);
-            setIsLocating(false);
-          }, 600);
-        },
-        () => {
-          setTimeout(() => {
-            onCityChange('杭州市');
-            setIsLocating(false);
-          }, 600);
-        }
-      );
-    } else {
-      setTimeout(() => {
-        onCityChange('杭州市');
-        setIsLocating(false);
-      }, 600);
-    }
-  }, [onCityChange]);
+    onLocate();
+  }, [onLocate]);
 
   return (
     <div className="relative min-h-[60vh] sm:min-h-[70vh] flex flex-col justify-end overflow-hidden">

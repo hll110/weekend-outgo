@@ -8,9 +8,10 @@ interface RouteCardProps {
   index: number;
   isFavorited: boolean;
   onToggleFavorite: (id: string) => void;
+  onOpenDetail?: (route: Route) => void;
 }
 
-function RouteCard({ route, index, isFavorited, onToggleFavorite }: RouteCardProps) {
+function RouteCard({ route, index, isFavorited, onToggleFavorite, onOpenDetail }: RouteCardProps) {
   const [showDetail, setShowDetail] = useState(false);
 
   const foodSpots = useMemo(() => route.spots.filter((s) => s.type === 'food'), [route.spots]);
@@ -21,7 +22,10 @@ function RouteCard({ route, index, isFavorited, onToggleFavorite }: RouteCardPro
       <div
         className="route-card cursor-pointer animate-float-up"
         style={{ animationDelay: `${index * 0.1}s` }}
-        onClick={() => setShowDetail(true)}
+        onClick={() => {
+          onOpenDetail?.(route);
+          setShowDetail(true);
+        }}
       >
         <div className="relative h-48 overflow-hidden">
           <img

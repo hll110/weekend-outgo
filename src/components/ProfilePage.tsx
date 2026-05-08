@@ -1,9 +1,13 @@
+import { useMemo, useState } from 'react';
 import {
-  Settings, Bell, Shield, FileText, HelpCircle,
-  ChevronRight, MapPin, Heart, Compass, Award,
-  Star, TrendingUp, Zap
+  Settings, Bell, Shield, FileText, HelpCircle, ChevronRight, MapPin, Heart, Compass, Award, Star, TrendingUp,
+  Zap, History, Trash2, Clock3
 } from 'lucide-react';
+import { ROUTES } from '@/data/routes';
+import type { Route } from '@/data/routes';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useRouteHistory } from '@/hooks/useRouteHistory';
+import RouteDetail from './RouteDetail';
 
 const MENU_ITEMS = [
   { icon: FileText, label: '我的行程', desc: '查看已规划的出行计划', color: 'text-blue-500', bg: 'bg-blue-50' },
@@ -13,8 +17,27 @@ const MENU_ITEMS = [
   { icon: HelpCircle, label: '帮助反馈', desc: '常见问题与客服', color: 'text-purple-500', bg: 'bg-purple-50' },
 ];
 
-export default function ProfilePage() {
-  const { favorites } = useFavorites();
+interface ProfilePageProps {
+  onOpenRoute: (routeId: string) => void;
+}
+
+export default function ProfilePage({ onOpenRoute }: ProfilePageProps) {
+  const { favorites, toggle } = useFavorites();
+  const { history, loaded, clearHistory } = useRouteHistory();
+  const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
+
+  const historyRoutes = useMemo(
+    () =>
+      history
+        .map((entry) => ({
+          entry,
+          route: ROUTES.find((item) => item.id === entry.routeId),
+        }))
+        .filter((item): item is { entry: (typeof history)[number]; route: Route } => Boolean(item.route)),
+    [history]
+  );
+
+  const recentHistory = historyRoutes.slice(0, 5);
 
   const badges = [
     {
@@ -37,7 +60,7 @@ export default function ProfilePage() {
       icon: Compass,
       label: '探索家',
       desc: '查看10条路线',
-      unlocked: true,
+      unlocked: history.length >= 10,
       color: 'from-amber-400 to-amber-600',
       iconColor: 'text-amber-500',
     },
@@ -79,7 +102,7 @@ export default function ProfilePage() {
       <div className="mx-5 -mt-3">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex items-center justify-around">
           <div className="flex flex-col items-center">
-            <span className="text-xl font-bold text-gray-900">6</span>
+            <span className="text-xl font-bold text-gray-900">{history.length}</span>
             <span className="text-xs text-gray-500 mt-0.5">探索路线</span>
           </div>
           <div className="w-px h-8 bg-gray-200" />
@@ -89,7 +112,7 @@ export default function ProfilePage() {
           </div>
           <div className="w-px h-8 bg-gray-200" />
           <div className="flex flex-col items-center">
-            <span className="text-xl font-bold text-gray-900">3</span>
+            <span className="text-xl font-bold text-gray-900">{new Set(history.map((item) => item.city)).size}</span>
             <span className="text-xs text-gray-500 mt-0.5">已访城市</span>
           </div>
         </div>
@@ -148,11 +171,68 @@ export default function ProfilePage() {
             <div className="flex-1">
               <div className="flex items-baseline gap-1 mb-1">
                 <Compass className="w-4 h-4 text-[#FF4D00]" />
-                <span className="text-2xl font-bold text-gray-900">{favorites.length + 1}</span>
+                <span className="text-2xl font-bold text-gray-900">{history.length || 1}</span>
               </div>
               <span className="text-xs text-gray-500">规划行程数</span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Route History */}
+      <div className="px-5 mt-5">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-gray-900">最近游玩路线</h2>
+          {history.length > 0 && (
+            <button
+              type="button"
+              onClick={clearHistory}
+              className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-[11px] text-gray-600 transition-colors hover:bg-gray-200"
+            >
+              <Trash2 className="w-3 h-3" />
+              清空
+            </button>
+          )}
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          {!loaded ? (
+            <div className="px-4 py-6 text-xs text-gray-400">加载历史中...</div>
+          ) : recentHistory.length > 0 ? (
+            recentHistory.map(({ route, entry }, index) => (
+              <button
+                type="button"
+                key={`${route.id}-${entry.viewedAt}`}
+                onClick={() => {
+                  onOpenRoute(route.id);
+                  setSelectedRoute(route);
+                }}
+                className={`w-full p-4 text-left transition-colors hover:bg-gray-50 ${
+                  index < recentHistory.length - 1 ? 'border-b border-gray-100' : ''
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-gray-900">{route.name}</p>
+                    <p className="mt-0.5 flex items-center gap-1 text-xs text-gray-500">
+                      <MapPin className="w-3 h-3 text-[#FF4D00]" />
+                      {entry.city}
+                    </p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+                </div>
+                <p className="mt-2 inline-flex items-center gap-1 text-[11px] text-gray-400">
+                  <Clock3 className="w-3 h-3" />
+                  {new Date(entry.viewedAt).toLocaleString('zh-CN', { hour12: false })}
+                </p>
+              </button>
+            ))
+          ) : (
+            <div className="px-4 py-8 text-center">
+              <History className="mx-auto mb-2 h-6 w-6 text-gray-300" />
+              <p className="text-sm text-gray-500">还没有历史路线记录</p>
+              <p className="mt-1 text-xs text-gray-400">去首页点击任意路线，即可自动记录</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -194,6 +274,15 @@ export default function ProfilePage() {
       <div className="px-5 pt-8 pb-4 text-center">
         <p className="text-xs text-gray-300">周末短途游 v1.0.0</p>
       </div>
+
+      {selectedRoute && (
+        <RouteDetail
+          route={selectedRoute}
+          onClose={() => setSelectedRoute(null)}
+          isFavorited={favorites.includes(selectedRoute.id)}
+          onToggleFavorite={toggle}
+        />
+      )}
     </div>
   );
 }
