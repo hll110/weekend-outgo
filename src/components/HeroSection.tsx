@@ -5,14 +5,55 @@ import { CITIES } from '@/data/routes';
 interface CityDropdownProps {
   selectedCity: string;
   cities: typeof CITIES;
+  searchKeyword: string;
+  activeIndex: number;
   onSelectCity: (city: string) => void;
+  onActiveIndexChange: (index: number) => void;
   isOpen: boolean;
   onClose: () => void;
   anchorRef: React.RefObject<HTMLDivElement | null>;
 }
 
-function CityDropdown({ selectedCity, cities, onSelectCity, isOpen, onClose, anchorRef }: CityDropdownProps) {
+function CityDropdown({
+  selectedCity,
+  cities,
+  searchKeyword,
+  activeIndex,
+  onSelectCity,
+  onActiveIndexChange,
+  isOpen,
+  onClose,
+  anchorRef,
+}: CityDropdownProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  const highlightText = useCallback((text: string) => {
+    const keyword = searchKeyword.trim();
+    if (!keyword) {
+      return <>{text}</>;
+    }
+
+    const lowerText = text.toLowerCase();
+    const lowerKeyword = keyword.toLowerCase();
+    const index = lowerText.indexOf(lowerKeyword);
+
+    if (index === -1) {
+      return <>{text}</>;
+    }
+
+    const before = text.slice(0, index);
+    const match = text.slice(index, index + keyword.length);
+    const after = text.slice(index + keyword.length);
+
+    return (
+      <>
+        {before}
+        <span className="text-[#f54e00] font-semibold">{match}</span>
+        {after}
+      </>
+    );
+  }, [searchKeyword]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -30,6 +71,13 @@ function CityDropdown({ selectedCity, cities, onSelectCity, isOpen, onClose, anc
     return () => document.removeEventListener('mousedown', handleClick);
   }, [isOpen, onClose, anchorRef]);
 
+  useEffect(() => {
+    if (!isOpen || activeIndex < 0) {
+      return;
+    }
+    itemRefs.current[activeIndex]?.scrollIntoView({ block: 'nearest' });
+  }, [activeIndex, isOpen, cities]);
+
   if (!isOpen) return null;
 
   return (
@@ -40,21 +88,27 @@ function CityDropdown({ selectedCity, cities, onSelectCity, isOpen, onClose, anc
       <div className="p-2 max-h-64 overflow-y-auto">
         <div className="text-xs text-gray-400 px-3 py-2 font-medium">搜索匹配城市</div>
         {cities.length > 0 ? (
-          cities.map((city) => (
+          cities.map((city, index) => (
             <button
               key={city.name}
+              ref={(node) => {
+                itemRefs.current[index] = node;
+              }}
               onClick={() => {
                 onSelectCity(city.name);
                 onClose();
               }}
+              onMouseEnter={() => onActiveIndexChange(index)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
                 selectedCity === city.name
                   ? 'bg-[#FF4D00]/10 text-[#FF4D00] font-medium'
-                  : 'text-gray-700 hover:bg-gray-50'
+                  : activeIndex === index
+                    ? 'bg-gray-100 text-gray-800'
+                    : 'text-gray-700 hover:bg-gray-50'
               }`}
             >
               <MapPin className="w-4 h-4" />
-              {city.name}
+              {highlightText(city.name)}
             </button>
           ))
         ) : (
@@ -76,6 +130,7 @@ export default function HeroSection({ selectedCity, onCityChange, isLocating, on
   const [isOpen, setIsOpen] = useState(false);
   const [showText, setShowText] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState(selectedCity);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const inputWrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -110,6 +165,21 @@ export default function HeroSection({ selectedCity, onCityChange, isLocating, on
     },
     [onCityChange]
   );
+
+  useEffect(() => {
+    if (!isOpen) {
+      setActiveIndex(-1);
+      return;
+    }
+
+    if (filteredCities.length === 0) {
+      setActiveIndex(-1);
+      return;
+    }
+
+    const selectedIndex = filteredCities.findIndex((city) => city.name === selectedCity);
+    setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0);
+  }, [filteredCities, isOpen, selectedCity]);
 
   const handleLocate = useCallback(() => {
     onLocate();
@@ -167,19 +237,52 @@ export default function HeroSection({ selectedCity, onCityChange, isLocating, on
                   <input
                     type="text"
                     value={searchKeyword}
-                    onFocus={() => setIsOpen(true)}
+                    onFocus={() => {
+                      setIsOpen(true);
+                    }}
                     onChange={(e) => {
                       setSearchKeyword(e.target.value);
                       setIsOpen(true);
                     }}
                     onKeyDown={(e) => {
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        if (!isOpen) {
+                          setIsOpen(true);
+                          return;
+                        }
+                        if (filteredCities.length > 0) {
+                          setActiveIndex((prev) => {
+                            if (prev < 0) return 0;
+                            return (prev + 1) % filteredCities.length;
+                          });
+                        }
+                        return;
+                      }
+
+                      if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        if (!isOpen) {
+                          setIsOpen(true);
+                          return;
+                        }
+                        if (filteredCities.length > 0) {
+                          setActiveIndex((prev) => {
+                            if (prev < 0) return filteredCities.length - 1;
+                            return (prev - 1 + filteredCities.length) % filteredCities.length;
+                          });
+                        }
+                        return;
+                      }
+
                       if (e.key === 'Escape') {
                         setIsOpen(false);
                         setSearchKeyword(selectedCity);
                       }
 
                       if (e.key === 'Enter' && filteredCities.length > 0) {
-                        handleSelectCity(filteredCities[0].name);
+                        const targetIndex = activeIndex >= 0 ? activeIndex : 0;
+                        handleSelectCity(filteredCities[targetIndex].name);
                       }
                     }}
                     placeholder="输入城市名进行搜索"
@@ -200,7 +303,10 @@ export default function HeroSection({ selectedCity, onCityChange, isLocating, on
                 <CityDropdown
                   selectedCity={selectedCity}
                   cities={filteredCities}
+                  searchKeyword={searchKeyword}
+                  activeIndex={activeIndex}
                   onSelectCity={handleSelectCity}
+                  onActiveIndexChange={setActiveIndex}
                   isOpen={isOpen}
                   onClose={() => setIsOpen(false)}
                   anchorRef={inputWrapperRef}
