@@ -2,6 +2,15 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { MapPin, ChevronDown, Navigation, Search, Sparkles } from 'lucide-react';
 import { CITIES } from '@/data/routes';
 
+const CITY_PINYIN_ALIASES: Record<string, string[]> = {
+  杭州市: ['hangzhou', 'hangzhoushi', 'hz'],
+  上海市: ['shanghai', 'shanghaishi', 'sh'],
+  苏州市: ['suzhou', 'suzhoushi', 'sz'],
+  南京市: ['nanjing', 'nanjingshi', 'nj'],
+  宁波市: ['ningbo', 'ningboshi', 'nb'],
+  无锡市: ['wuxi', 'wuxishi', 'wx'],
+};
+
 interface CityDropdownProps {
   selectedCity: string;
   cities: typeof CITIES;
@@ -153,7 +162,9 @@ export default function HeroSection({ selectedCity, onCityChange, isLocating, on
     return CITIES.filter((city) => {
       const fullName = city.name.toLowerCase();
       const shortName = city.name.replace('市', '').toLowerCase();
-      return fullName.includes(keyword) || shortName.includes(keyword);
+      const aliases = CITY_PINYIN_ALIASES[city.name] ?? [];
+      const pinyinMatched = aliases.some((alias) => alias.includes(keyword));
+      return fullName.includes(keyword) || shortName.includes(keyword) || pinyinMatched;
     });
   }, [searchKeyword]);
 
