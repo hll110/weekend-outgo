@@ -75,7 +75,29 @@ supabase/
 
 ---
 
-## 四、快速开始
+## 四、页面功能截图
+
+> 截图文件位于 `docs/screenshots/`。当前仓库提供占位图，后续可直接替换同名文件为真实截图。
+
+### 1) 首页：定位 + 地图路线推荐
+
+![首页定位与地图推荐](docs/screenshots/home-map.svg)
+
+### 2) 顶部城市搜索（中文 / 拼音 / 首字母）
+
+![顶部城市搜索下拉](docs/screenshots/home-search-dropdown.svg)
+
+### 3) 路线详情弹窗
+
+![路线详情弹窗](docs/screenshots/route-detail-modal.svg)
+
+### 4) 我的模块（资料 + 收藏 + 历史）
+
+![我的模块](docs/screenshots/profile-module.svg)
+
+---
+
+## 五、快速开始
 
 ### 1) 安装依赖
 ```bash
@@ -111,7 +133,54 @@ npm run build
 
 ---
 
-## 五、NPM 脚本
+## 六、部署指南
+
+### 1) Vercel 部署（推荐）
+
+1. 将仓库推送到 GitHub。
+2. 在 Vercel 中导入该仓库。
+3. Framework Preset 选择 `Vite`（通常会自动识别）。
+4. 在 Vercel Project Settings -> Environment Variables 中配置：
+
+```bash
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+```
+
+5. 触发部署，默认构建命令与输出目录：
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+
+### 2) 静态托管部署（Nginx / OSS / CDN）
+
+本项目是标准 Vite SPA，可按静态资源托管：
+
+```bash
+npm install
+npm run build
+```
+
+将 `dist/` 目录上传到静态服务器，并保证 SPA 路由回退到 `index.html`。
+
+### 3) Nginx 示例配置
+
+```nginx
+server {
+  listen 80;
+  server_name your-domain.com;
+
+  root /var/www/weekend-outgo/dist;
+  index index.html;
+
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+}
+```
+
+---
+
+## 七、NPM 脚本
 
 - `npm run dev`：启动开发服务
 - `npm run build`：TypeScript 编译 + 生产构建
@@ -120,7 +189,7 @@ npm run build
 
 ---
 
-## 六、数据库说明（Supabase）
+## 八、数据库说明（Supabase）
 
 - Supabase 使用 **PostgreSQL**（不是 MySQL）。
 - SQL 脚本已提供：`supabase/schema.sql`。
@@ -128,7 +197,7 @@ npm run build
 
 ---
 
-## 七、后续建议
+## 九、后续建议
 
 - 接入真实用户登录（Supabase Auth），实现“账号级”跨设备同步。
 - 路线数据改为后台可运营配置（CMS 或管理端）。
