@@ -11,36 +11,7 @@ interface CityDropdownProps {
 }
 
 function CityDropdown({ selectedCity, onCityChange, isOpen, onClose, anchorRef }: CityDropdownProps) {
-  const [style, setStyle] = useState<React.CSSProperties>({});
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!isOpen || !anchorRef.current) return;
-
-    const updatePosition = () => {
-      const rect = anchorRef.current!.getBoundingClientRect();
-      const dropdownHeight = 280;
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const showAbove = spaceBelow < dropdownHeight && rect.top > dropdownHeight;
-
-      setStyle({
-        position: 'fixed',
-        left: rect.left,
-        top: showAbove ? rect.top - dropdownHeight - 8 : rect.bottom + 8,
-        width: rect.width,
-        zIndex: 9999,
-      });
-    };
-
-    updatePosition();
-    window.addEventListener('scroll', updatePosition, true);
-    window.addEventListener('resize', updatePosition);
-
-    return () => {
-      window.removeEventListener('scroll', updatePosition, true);
-      window.removeEventListener('resize', updatePosition);
-    };
-  }, [isOpen, anchorRef]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -63,8 +34,7 @@ function CityDropdown({ selectedCity, onCityChange, isOpen, onClose, anchorRef }
   return (
     <div
       ref={dropdownRef}
-      style={style}
-      className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-scale-in"
+      className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-scale-in"
     >
       <div className="p-2 max-h-64 overflow-y-auto">
         <div className="text-xs text-gray-400 px-3 py-2 font-medium">热门出发城市</div>
@@ -168,7 +138,7 @@ export default function HeroSection({ selectedCity, onCityChange, isLocating, on
                   <ChevronDown className={`w-4 h-4 text-white/60 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                {/* Fixed-position dropdown rendered via portal-like fixed positioning */}
+                {/* Anchored dropdown to avoid viewport offset */}
                 <CityDropdown
                   selectedCity={selectedCity}
                   onCityChange={onCityChange}

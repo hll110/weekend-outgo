@@ -75,14 +75,21 @@ export default function RouteMapPanel({
       <div className="overflow-hidden rounded-xl border border-[rgba(38,37,30,0.12)]">
         <MapContainer
           center={[anchorPoint.lat, anchorPoint.lng]}
-          zoom={9}
+          zoom={11}
+          minZoom={4}
+          maxZoom={18}
+          zoomSnap={0.5}
+          preferCanvas
           scrollWheelZoom={false}
           className="h-[290px] w-full"
         >
           <MapViewSync center={anchorPoint} />
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://ditu.amap.com/">高德地图</a>'
+            url="https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=2&style=8&x={x}&y={y}&z={z}"
+            subdomains={['1', '2', '3', '4']}
+            tileSize={256}
+            detectRetina
           />
 
           <CircleMarker
