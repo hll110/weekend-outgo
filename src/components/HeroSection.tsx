@@ -116,7 +116,7 @@ export default function HeroSection({ selectedCity, onCityChange, isLocating, on
   }, [onLocate]);
 
   return (
-    <div className="relative min-h-[60vh] sm:min-h-[70vh] flex flex-col justify-end overflow-hidden">
+    <div className="relative min-h-[60vh] sm:min-h-[70vh] flex flex-col justify-end overflow-visible">
       {/* Background Image */}
       <div className="absolute inset-0">
         <img
